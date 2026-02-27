@@ -75,14 +75,12 @@
       font-size: 14px;
       padding: 10px 0;
     }
-
   </style>
 </head>
 
 <body>
 
   <div class="grid">
-
     <div class="card">
       <h2>450SX</h2>
       <div id="c450"></div>
@@ -97,7 +95,6 @@
       <h2>250 East</h2>
       <div id="c250e"></div>
     </div>
-
   </div>
 
 <script>
@@ -119,29 +116,26 @@ async function render(cls, elementId) {
     const data = await response.json();
 
     if (!data.top10 || !data.top10.length) {
-      container.innerHTML = `<div class="error">No standings data available.</div>`;
+      container.innerHTML = '<div class="error">No standings data available.</div>';
       return;
     }
 
-    const rows = data.top10.map(r => `
-      <tr>
-        <td class="rank">${r.rank}</td>
-        <td class="name">${r.name}</td>
-        <td class="pts">${r.points}</td>
-      </tr>
-    `).join("");
+    const rows = data.top10.map(function(r) {
+      return '<tr>' +
+             '<td class="rank">' + r.rank + '</td>' +
+             '<td class="name">' + r.name + '</td>' +
+             '<td class="pts">' + r.points + '</td>' +
+             '</tr>';
+    }).join("");
 
-    container.innerHTML = `
-      <table>
-        ${rows}
-      </table>
-      <div class="updated">
-        Updated: ${new Date(data.updatedAt).toLocaleString()}
-      </div>
-    `;
+    container.innerHTML =
+      '<table>' + rows + '</table>' +
+      '<div class="updated">Updated: ' +
+      new Date(data.updatedAt).toLocaleString() +
+      '</div>';
 
   } catch (error) {
-    container.innerHTML = `<div class="error">Unable to load standings.</div>`;
+    container.innerHTML = '<div class="error">Unable to load standings.</div>';
   }
 }
 
@@ -152,8 +146,6 @@ function loadAll() {
 }
 
 loadAll();
-
-// Auto refresh every 10 minutes
 setInterval(loadAll, 10 * 60 * 1000);
 
 </script>
