@@ -6,49 +6,142 @@
   <title>AMA Supercross Standings</title>
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #000; color: #fff; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .card { background: #111; border-radius: 12px; padding: 16px; box-shadow: 0 0 15px rgba(255,255,255,0.05); }
-    h2 { margin: 0 0 12px 0; text-align: center; font-size: 24px; border-bottom: 1px solid #222; padding-bottom: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 18px; }
-    td { padding: 6px 0; border-bottom: 1px solid #222; }
-    td.rank { width: 30px; opacity: 0.6; }
-    td.name { padding-left: 8px; }
-    td.pts { width: 60px; text-align: right; font-weight: bold; color: #4CAF50; }
-    .updated { text-align: center; margin-top: 10px; font-size: 12px; opacity: 0.6; }
-    .error { text-align: center; color: #ff6666; font-size: 14px; padding: 10px 0; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #000;
+      color: #fff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: #111;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.06);
+    }
+
+    h2 {
+      margin: 0 0 12px 0;
+      text-align: center;
+      font-size: 24px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 18px;
+    }
+
+    td {
+      padding: 8px 0;
+      border-bottom: 1px solid #222;
+    }
+
+    td.rank {
+      width: 30px;
+      opacity: 0.6;
+    }
+
+    td.name {
+      padding-left: 6px;
+    }
+
+    td.pts {
+      width: 60px;
+      text-align: right;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+
+    .logo {
+      height: 20px;
+      width: auto;
+      vertical-align: middle;
+      margin-right: 6px;
+      filter: brightness(1.2);
+    }
+
+    .updated {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 12px;
+      opacity: 0.5;
+    }
+
+    .error {
+      text-align: center;
+      color: #ff6666;
+      padding: 10px 0;
+    }
   </style>
 </head>
 
 <body>
+
   <div class="grid">
-    <div class="card"><h2>450SX</h2><div id="c450"></div></div>
-    <div class="card"><h2>250 West</h2><div id="c250w"></div></div>
-    <div class="card"><h2>250 East</h2><div id="c250e"></div></div>
+    <div class="card">
+      <h2>450SX</h2>
+      <div id="c450"></div>
+    </div>
+
+    <div class="card">
+      <h2>250 West</h2>
+      <div id="c250w"></div>
+    </div>
+
+    <div class="card">
+      <h2>250 East</h2>
+      <div id="c250e"></div>
+    </div>
   </div>
 
 <script>
+
 const BASE = "https://smxstanding.tylerphares.workers.dev";
 
 async function render(cls, elementId) {
   const container = document.getElementById(elementId);
+
   try {
     const response = await fetch(`${BASE}/?class=${cls}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Fetch failed");
-    const data = await response.json();
 
+    const data = await response.json();
     if (!data.top10 || !data.top10.length) {
       container.innerHTML = '<div class="error">No standings data available.</div>';
       return;
     }
 
-    const rows = data.top10.map(r =>
-      `<tr><td class="rank">${r.rank}</td><td class="name">${r.name}</td><td class="pts">${r.points}</td></tr>`
-    ).join("");
+    const rows = data.top10.map(r => {
+      return `
+        <tr>
+          <td class="rank">${r.rank}</td>
+          <td class="name">
+            ${r.logo ? `<img src="${r.logo}" class="logo">` : ""}
+            ${r.name}
+          </td>
+          <td class="pts">${r.points}</td>
+        </tr>
+      `;
+    }).join("");
 
-    container.innerHTML =
-      `<table>${rows}</table>` +
-      `<div class="updated">Updated: ${new Date(data.updatedAt).toLocaleString()}</div>`;
+    container.innerHTML = `
+      <table>${rows}</table>
+      <div class="updated">
+        Updated: ${new Date(data.updatedAt).toLocaleString()}
+      </div>
+    `;
+
   } catch (e) {
     container.innerHTML = '<div class="error">Unable to load standings.</div>';
   }
@@ -61,7 +154,10 @@ function loadAll() {
 }
 
 loadAll();
+
+// Auto refresh every 10 minutes
 setInterval(loadAll, 10 * 60 * 1000);
+
 </script>
 
 </body>
