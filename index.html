@@ -7,24 +7,22 @@
 
   <style>
     :root {
+      --row-h: 48px;
+      --rows-visible: 4;
       --bg: #000;
       --card: #111;
       --border: #222;
       --text: #fff;
       --muted: rgba(255,255,255,0.55);
       --pts: #4CAF50;
-
-      /* UPDATED: 4 visible rows + slightly smaller text */
-      --row-h: 48px;
-      --rows-visible: 4;
     }
 
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
       padding: 18px;
       background: var(--bg);
       color: var(--text);
+      font-family: Arial, sans-serif;
     }
 
     .grid {
@@ -36,31 +34,25 @@
     .card {
       background: var(--card);
       border-radius: 14px;
-      padding: 14px 14px 12px 14px;
-      box-shadow: 0 0 18px rgba(255,255,255,0.06);
+      padding: 14px;
       border: 1px solid #151515;
       display: flex;
       flex-direction: column;
-      min-height: calc((var(--row-h) * var(--rows-visible)) + 120px);
     }
 
     .cardHeader {
       position: sticky;
       top: 0;
-      z-index: 5;
       background: var(--card);
-      padding-bottom: 8px;
-      margin-bottom: 6px;
       border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      z-index: 5;
     }
 
-    /* Slightly smaller than previous */
     h2 {
       margin: 0;
       text-align: center;
       font-size: 23px;
-      letter-spacing: 0.6px;
-      padding: 6px 0 4px 0;
     }
 
     .colHeader {
@@ -68,7 +60,6 @@
       grid-template-columns: 40px 1fr 70px;
       font-size: 12px;
       color: var(--muted);
-      padding: 6px 2px 4px 2px;
     }
 
     .colHeader div:last-child {
@@ -78,7 +69,6 @@
     .viewport {
       height: calc(var(--row-h) * var(--rows-visible));
       overflow: hidden;
-      position: relative;
       margin-top: 8px;
     }
 
@@ -92,7 +82,6 @@
       height: var(--row-h);
     }
 
-    /* Slightly smaller than previous */
     td {
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
@@ -104,20 +93,19 @@
 
     td.rank {
       width: 40px;
-      opacity: 0.75;
       padding-left: 4px;
+      opacity: 0.75;
     }
 
     td.name {
       padding-left: 8px;
     }
 
-    /* Slightly smaller than previous */
     td.pts {
       width: 70px;
       text-align: right;
-      font-weight: bold;
       font-size: 21px;
+      font-weight: bold;
       color: var(--pts);
       padding-right: 4px;
     }
@@ -126,110 +114,90 @@
       height: 18px;
       margin-right: 6px;
       vertical-align: middle;
-      filter: brightness(1.15);
     }
 
     .updated {
-      margin-top: 10px;
+      margin-top: 8px;
       text-align: center;
       font-size: 12px;
       opacity: 0.55;
     }
 
-    .error {
-      text-align: center;
-      color: #ff6666;
-      padding: 12px 0;
-      font-size: 14px;
-    }
-
     .scroller {
-      will-change: transform;
-      transform: translateY(0);
       transition: transform 600ms ease;
     }
   </style>
 </head>
-
 <body>
 
-  <div class="grid">
-    <div class="card">
-      <div class="cardHeader">
-        <h2>450SX</h2>
-        <div class="colHeader">
-          <div>#</div><div>Rider</div><div>PTS</div>
-        </div>
-      </div>
-      <div class="viewport">
-        <div id="c450" class="scroller"></div>
-      </div>
-      <div id="u450" class="updated"></div>
-    </div>
+<div class="grid">
 
-    <div class="card">
-      <div class="cardHeader">
-        <h2>250 West</h2>
-        <div class="colHeader">
-          <div>#</div><div>Rider</div><div>PTS</div>
-        </div>
+  <div class="card">
+    <div class="cardHeader">
+      <h2>450SX</h2>
+      <div class="colHeader">
+        <div>#</div><div>Rider</div><div>PTS</div>
       </div>
-      <div class="viewport">
-        <div id="c250w" class="scroller"></div>
-      </div>
-      <div id="u250w" class="updated"></div>
     </div>
-
-    <div class="card">
-      <div class="cardHeader">
-        <h2>250 East</h2>
-        <div class="colHeader">
-          <div>#</div><div>Rider</div><div>PTS</div>
-        </div>
-      </div>
-      <div class="viewport">
-        <div id="c250e" class="scroller"></div>
-      </div>
-      <div id="u250e" class="updated"></div>
+    <div class="viewport">
+      <div id="c450" class="scroller"></div>
     </div>
+    <div id="u450" class="updated"></div>
   </div>
+
+  <div class="card">
+    <div class="cardHeader">
+      <h2>250 West</h2>
+      <div class="colHeader">
+        <div>#</div><div>Rider</div><div>PTS</div>
+      </div>
+    </div>
+    <div class="viewport">
+      <div id="c250w" class="scroller"></div>
+    </div>
+    <div id="u250w" class="updated"></div>
+  </div>
+
+  <div class="card">
+    <div class="cardHeader">
+      <h2>250 East</h2>
+      <div class="colHeader">
+        <div>#</div><div>Rider</div><div>PTS</div>
+      </div>
+    </div>
+    <div class="viewport">
+      <div id="c250e" class="scroller"></div>
+    </div>
+    <div id="u250e" class="updated"></div>
+  </div>
+
+</div>
 
 <script>
 const BASE = "https://smxstanding.tylerphares.workers.dev";
 
-/* MUST match CSS */
 const ROW_H = 48;
 const VISIBLE = 4;
-
-/* Scroll timing */
+const MAX_DISPLAY = 20;   // 🔥 TOP 20 ONLY
 const STEP_MS = 2200;
-const PAUSE_END_MS = 1600;
+const PAUSE_MS = 1600;
 
 const state = {
-  "450":  { timer: null, idx: 0, count: 0, el: "c450",  upd: "u450"  },
-  "250w": { timer: null, idx: 0, count: 0, el: "c250w", upd: "u250w" },
-  "250e": { timer: null, idx: 0, count: 0, el: "c250e", upd: "u250e" }
+  "450":  { idx:0, timer:null, el:"c450", upd:"u450", count:0 },
+  "250w": { idx:0, timer:null, el:"c250w", upd:"u250w", count:0 },
+  "250e": { idx:0, timer:null, el:"c250e", upd:"u250e", count:0 }
 };
-
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 function buildRows(list) {
   return `
     <table>
       <tbody>
-        ${list.map(r => `
+        ${list.map(r=>`
           <tr>
             <td class="rank">${r.rank}</td>
             <td class="name">
-              ${r.logo ? `<img src="${r.logo}" class="logo" alt="">` : ""}
-              ${escapeHtml(r.name)}
+              ${r.logo ? `<img src="${r.logo}" class="logo">` : ""}
+              ${r.name}
             </td>
             <td class="pts">${r.points}</td>
           </tr>
@@ -239,93 +207,82 @@ function buildRows(list) {
   `;
 }
 
-function stopScroll(cls) {
-  const s = state[cls];
-  if (s.timer) clearInterval(s.timer);
-  s.timer = null;
+function stopScroll(cls){
+  if(state[cls].timer) clearInterval(state[cls].timer);
 }
 
-function startScroll(cls) {
+function startScroll(cls){
   const s = state[cls];
   stopScroll(cls);
 
   const el = document.getElementById(s.el);
-  el.style.transform = "translateY(0px)";
 
-  if (s.count <= VISIBLE) return;
+  if(s.count <= VISIBLE) return;
 
   s.idx = 0;
 
-  s.timer = setInterval(() => {
+  s.timer = setInterval(()=>{
     const maxStart = s.count - VISIBLE;
 
-    if (s.idx < maxStart) {
+    if(s.idx < maxStart){
       s.idx++;
       el.style.transform = `translateY(${-s.idx * ROW_H}px)`;
     } else {
-      // pause, then snap to top and restart
       stopScroll(cls);
-      setTimeout(() => {
-        el.style.transition = "none";
-        el.style.transform = "translateY(0px)";
-        s.idx = 0;
-
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            el.style.transition = "transform 600ms ease";
+      setTimeout(()=>{
+        el.style.transition="none";
+        el.style.transform="translateY(0px)";
+        s.idx=0;
+        requestAnimationFrame(()=>{
+          requestAnimationFrame(()=>{
+            el.style.transition="transform 600ms ease";
             startScroll(cls);
           });
         });
-      }, PAUSE_END_MS);
+      }, PAUSE_MS);
     }
+
   }, STEP_MS);
 }
 
-async function render(cls) {
+async function render(cls){
   const s = state[cls];
-  const container = document.getElementById(s.el);
-  const updatedEl = document.getElementById(s.upd);
 
-  try {
-    const res = await fetch(`${BASE}/?class=${cls}`, { cache: "no-store" });
-    if (!res.ok) throw new Error("Fetch failed");
-
+  try{
+    const res = await fetch(`${BASE}/?class=${cls}`, {cache:"no-store"});
     const data = await res.json();
-    const list = data.standings || [];
 
-    if (!list.length) {
-      container.innerHTML = '<div class="error">No data</div>';
-      updatedEl.textContent = "";
-      stopScroll(cls);
-      s.count = 0;
-      return;
-    }
+    let list = data.standings || [];
 
-    // Ensure points-leader order + sequential ranks (in case upstream changes)
-    list.sort((a, b) => (b.points - a.points) || String(a.name).localeCompare(String(b.name)));
-    list.forEach((r, i) => r.rank = i + 1);
+    // sort just in case
+    list.sort((a,b)=>b.points - a.points);
+    list.forEach((r,i)=>r.rank=i+1);
 
-    container.innerHTML = buildRows(list);
-    updatedEl.textContent = `Updated: ${new Date(data.updatedAt).toLocaleString()}`;
+    // 🔥 limit to top 20
+    list = list.slice(0, MAX_DISPLAY);
+
+    document.getElementById(s.el).innerHTML = buildRows(list);
+    document.getElementById(s.upd).textContent =
+      `Updated: ${new Date(data.updatedAt).toLocaleString()}`;
 
     s.count = list.length;
     startScroll(cls);
-  } catch (e) {
-    container.innerHTML = '<div class="error">Load error</div>';
-    updatedEl.textContent = "";
-    stopScroll(cls);
-    s.count = 0;
+
+  }catch{
+    document.getElementById(s.el).innerHTML =
+      "<div style='padding:10px;color:red;text-align:center;'>Load Error</div>";
   }
 }
 
-function loadAll() {
+function loadAll(){
   render("450");
   render("250w");
   render("250e");
 }
 
 loadAll();
-setInterval(loadAll, 10 * 60 * 1000);
+setInterval(loadAll, 10*60*1000);
+
 </script>
 
 </body>
