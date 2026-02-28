@@ -6,50 +6,102 @@
   <title>AMA Supercross Standings</title>
 
   <style>
+    :root {
+      --bg: #000;
+      --card: #111;
+      --border: #222;
+      --text: #fff;
+      --muted: rgba(255,255,255,0.55);
+      --pts: #4CAF50;
+      --row-h: 46px;          /* controls “5 visible rows” */
+      --rows-visible: 5;
+    }
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
-      background: #000;
-      color: #fff;
+      padding: 18px;
+      background: var(--bg);
+      color: var(--text);
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      gap: 18px;
     }
 
     .card {
-      background: #111;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 0 20px rgba(255,255,255,0.06);
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px 14px 12px 14px;
+      box-shadow: 0 0 18px rgba(255,255,255,0.06);
+      border: 1px solid #151515;
+      display: flex;
+      flex-direction: column;
+      min-height: calc((var(--row-h) * var(--rows-visible)) + 110px);
+    }
+
+    /* Sticky header inside each card */
+    .cardHeader {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--card);
+      padding-bottom: 8px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--border);
     }
 
     h2 {
-      margin: 0 0 12px 0;
+      margin: 0;
       text-align: center;
-      font-size: 24px;
-      border-bottom: 1px solid #222;
-      padding-bottom: 8px;
-      letter-spacing: 1px;
+      font-size: 22px;
+      letter-spacing: 0.6px;
+      padding: 6px 0 4px 0;
+    }
+
+    /* Column labels (also “sticky” under title) */
+    .colHeader {
+      display: grid;
+      grid-template-columns: 34px 1fr 64px;
+      gap: 0;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 2px 4px 2px;
+    }
+    .colHeader div:last-child { text-align: right; }
+
+    /* Viewport shows exactly 5 rows */
+    .viewport {
+      height: calc(var(--row-h) * var(--rows-visible));
+      overflow: hidden;
+      position: relative;
+      margin-top: 8px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 18px;
+      table-layout: fixed;
     }
 
+    tr { height: var(--row-h); }
     td {
-      padding: 8px 0;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid var(--border);
+      padding: 0;
+      vertical-align: middle;
+      font-size: 18px;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     td.rank {
-      width: 30px;
-      opacity: 0.6;
+      width: 34px;
+      opacity: 0.7;
+      padding-left: 2px;
     }
 
     td.name {
@@ -57,31 +109,40 @@
     }
 
     td.pts {
-      width: 60px;
+      width: 64px;
       text-align: right;
       font-weight: bold;
-      color: #4CAF50;
+      color: var(--pts);
+      padding-right: 2px;
     }
 
     .logo {
-      height: 20px;
+      height: 18px;
       width: auto;
       vertical-align: middle;
       margin-right: 6px;
-      filter: brightness(1.2);
+      filter: brightness(1.15);
     }
 
     .updated {
-      text-align: center;
       margin-top: 10px;
+      text-align: center;
       font-size: 12px;
-      opacity: 0.5;
+      opacity: 0.55;
     }
 
     .error {
       text-align: center;
       color: #ff6666;
-      padding: 10px 0;
+      padding: 12px 0;
+      font-size: 14px;
+    }
+
+    /* Smooth scrolling animation (we set translateY in JS) */
+    .scroller {
+      will-change: transform;
+      transform: translateY(0);
+      transition: transform 600ms ease;
     }
   </style>
 </head>
@@ -90,74 +151,186 @@
 
   <div class="grid">
     <div class="card">
-      <h2>450SX</h2>
-      <div id="c450"></div>
+      <div class="cardHeader">
+        <h2>450SX</h2>
+        <div class="colHeader">
+          <div>#</div><div>Rider</div><div>PTS</div>
+        </div>
+      </div>
+      <div class="viewport">
+        <div id="c450" class="scroller"></div>
+      </div>
+      <div id="u450" class="updated"></div>
     </div>
 
     <div class="card">
-      <h2>250 West</h2>
-      <div id="c250w"></div>
+      <div class="cardHeader">
+        <h2>250 West</h2>
+        <div class="colHeader">
+          <div>#</div><div>Rider</div><div>PTS</div>
+        </div>
+      </div>
+      <div class="viewport">
+        <div id="c250w" class="scroller"></div>
+      </div>
+      <div id="u250w" class="updated"></div>
     </div>
 
     <div class="card">
-      <h2>250 East</h2>
-      <div id="c250e"></div>
+      <div class="cardHeader">
+        <h2>250 East</h2>
+        <div class="colHeader">
+          <div>#</div><div>Rider</div><div>PTS</div>
+        </div>
+      </div>
+      <div class="viewport">
+        <div id="c250e" class="scroller"></div>
+      </div>
+      <div id="u250e" class="updated"></div>
     </div>
   </div>
 
 <script>
-
 const BASE = "https://smxstanding.tylerphares.workers.dev";
 
-async function render(cls, elementId) {
-  const container = document.getElementById(elementId);
+// Scrolling behavior
+const ROW_H = 46;          // must match --row-h
+const VISIBLE = 5;         // must match --rows-visible
+const STEP_MS = 2200;      // time between scroll steps
+const PAUSE_END_MS = 1800; // pause when wrapping back to top
+
+// One scroller per class
+const state = {
+  "450":  { timer: null, idx: 0, count: 0, el: "c450",  upd: "u450"  },
+  "250w": { timer: null, idx: 0, count: 0, el: "c250w", upd: "u250w" },
+  "250e": { timer: null, idx: 0, count: 0, el: "c250e", upd: "u250e" }
+};
+
+function buildTableRows(list) {
+  const rows = list.map(r => `
+    <tr>
+      <td class="rank">${r.rank}</td>
+      <td class="name">
+        ${r.logo ? `<img src="${r.logo}" class="logo" alt="">` : ``}
+        ${escapeHtml(r.name)}
+      </td>
+      <td class="pts">${r.points}</td>
+    </tr>
+  `).join("");
+
+  return `<table><tbody>${rows}</tbody></table>`;
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function stopScroll(cls) {
+  const s = state[cls];
+  if (s.timer) clearInterval(s.timer);
+  s.timer = null;
+}
+
+function startScroll(cls) {
+  const s = state[cls];
+  stopScroll(cls);
+
+  // If fewer than or equal to visible rows, no scrolling needed
+  if (s.count <= VISIBLE) {
+    s.idx = 0;
+    document.getElementById(s.el).style.transform = `translateY(0px)`;
+    return;
+  }
+
+  s.idx = 0;
+  document.getElementById(s.el).style.transform = `translateY(0px)`;
+
+  s.timer = setInterval(() => {
+    const maxStart = s.count - VISIBLE; // last starting index where 5 rows still show
+
+    if (s.idx < maxStart) {
+      s.idx += 1;
+      document.getElementById(s.el).style.transform = `translateY(${-s.idx * ROW_H}px)`;
+    } else {
+      // at end -> pause, then snap back to top
+      clearInterval(s.timer);
+      s.timer = null;
+
+      setTimeout(() => {
+        // snap back without a visible “jump” feel:
+        // 1) remove transition, reset to 0
+        const el = document.getElementById(s.el);
+        el.style.transition = "none";
+        el.style.transform = "translateY(0px)";
+        s.idx = 0;
+
+        // 2) re-enable transition and restart interval
+        // next tick to ensure browser applies the no-transition reset
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            el.style.transition = "transform 600ms ease";
+            startScroll(cls);
+          });
+        });
+      }, PAUSE_END_MS);
+    }
+  }, STEP_MS);
+}
+
+async function render(cls) {
+  const s = state[cls];
+  const container = document.getElementById(s.el);
+  const updatedEl = document.getElementById(s.upd);
 
   try {
-    const response = await fetch(`${BASE}/?class=${cls}`, { cache: "no-store" });
-    if (!response.ok) throw new Error("Fetch failed");
+    const res = await fetch(`${BASE}/?class=${cls}`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Fetch failed");
 
-    const data = await response.json();
-    if (!data.top10 || !data.top10.length) {
-      container.innerHTML = '<div class="error">No standings data available.</div>';
+    const data = await res.json();
+    const list = data.standings || [];
+
+    if (!list.length) {
+      container.innerHTML = `<div class="error">No standings data available.</div>`;
+      updatedEl.textContent = "";
+      stopScroll(cls);
+      s.count = 0;
       return;
     }
 
-    const rows = data.top10.map(r => {
-      return `
-        <tr>
-          <td class="rank">${r.rank}</td>
-          <td class="name">
-            ${r.logo ? `<img src="${r.logo}" class="logo">` : ""}
-            ${r.name}
-          </td>
-          <td class="pts">${r.points}</td>
-        </tr>
-      `;
-    }).join("");
+    // Ensure points leaders order (just in case)
+    list.sort((a, b) => (b.points - a.points) || String(a.name).localeCompare(String(b.name)));
+    // Re-rank 1..N
+    list.forEach((r, i) => r.rank = i + 1);
 
-    container.innerHTML = `
-      <table>${rows}</table>
-      <div class="updated">
-        Updated: ${new Date(data.updatedAt).toLocaleString()}
-      </div>
-    `;
+    container.innerHTML = buildTableRows(list);
+    updatedEl.textContent = `Updated: ${new Date(data.updatedAt).toLocaleString()}`;
+
+    s.count = list.length;
+    startScroll(cls);
 
   } catch (e) {
-    container.innerHTML = '<div class="error">Unable to load standings.</div>';
+    container.innerHTML = `<div class="error">Unable to load standings.</div>`;
+    updatedEl.textContent = "";
+    stopScroll(cls);
+    s.count = 0;
   }
 }
 
 function loadAll() {
-  render("450", "c450");
-  render("250w", "c250w");
-  render("250e", "c250e");
+  render("450");
+  render("250w");
+  render("250e");
 }
 
 loadAll();
 
-// Auto refresh every 10 minutes
+// Refresh data every 10 minutes (keeps points current)
 setInterval(loadAll, 10 * 60 * 1000);
-
 </script>
 
 </body>
