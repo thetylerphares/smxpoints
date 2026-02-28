@@ -13,8 +13,10 @@
       --text: #fff;
       --muted: rgba(255,255,255,0.55);
       --pts: #4CAF50;
-      --row-h: 54px;           /* adjusted for mid-size text */
-      --rows-visible: 5;
+
+      /* UPDATED: 4 visible rows + slightly smaller text */
+      --row-h: 48px;
+      --rows-visible: 4;
     }
 
     body {
@@ -52,10 +54,11 @@
       border-bottom: 1px solid var(--border);
     }
 
+    /* Slightly smaller than previous */
     h2 {
       margin: 0;
       text-align: center;
-      font-size: 25px; /* mid-size */
+      font-size: 23px;
       letter-spacing: 0.6px;
       padding: 6px 0 4px 0;
     }
@@ -89,10 +92,11 @@
       height: var(--row-h);
     }
 
+    /* Slightly smaller than previous */
     td {
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
-      font-size: 21px; /* mid-size */
+      font-size: 19px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -108,17 +112,18 @@
       padding-left: 8px;
     }
 
+    /* Slightly smaller than previous */
     td.pts {
       width: 70px;
       text-align: right;
       font-weight: bold;
-      font-size: 23px; /* emphasized slightly */
+      font-size: 21px;
       color: var(--pts);
       padding-right: 4px;
     }
 
     .logo {
-      height: 20px;
+      height: 18px;
       margin-right: 6px;
       vertical-align: middle;
       filter: brightness(1.15);
@@ -192,16 +197,28 @@
 <script>
 const BASE = "https://smxstanding.tylerphares.workers.dev";
 
-const ROW_H = 54;
-const VISIBLE = 5;
-const STEP_MS = 2400;
-const PAUSE_END_MS = 1800;
+/* MUST match CSS */
+const ROW_H = 48;
+const VISIBLE = 4;
+
+/* Scroll timing */
+const STEP_MS = 2200;
+const PAUSE_END_MS = 1600;
 
 const state = {
   "450":  { timer: null, idx: 0, count: 0, el: "c450",  upd: "u450"  },
   "250w": { timer: null, idx: 0, count: 0, el: "c250w", upd: "u250w" },
   "250e": { timer: null, idx: 0, count: 0, el: "c250e", upd: "u250e" }
 };
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 function buildRows(list) {
   return `
@@ -211,8 +228,8 @@ function buildRows(list) {
           <tr>
             <td class="rank">${r.rank}</td>
             <td class="name">
-              ${r.logo ? `<img src="${r.logo}" class="logo">` : ""}
-              ${r.name}
+              ${r.logo ? `<img src="${r.logo}" class="logo" alt="">` : ""}
+              ${escapeHtml(r.name)}
             </td>
             <td class="pts">${r.points}</td>
           </tr>
@@ -223,28 +240,36 @@ function buildRows(list) {
 }
 
 function stopScroll(cls) {
-  if (state[cls].timer) clearInterval(state[cls].timer);
+  const s = state[cls];
+  if (s.timer) clearInterval(s.timer);
+  s.timer = null;
 }
 
 function startScroll(cls) {
   const s = state[cls];
   stopScroll(cls);
 
+  const el = document.getElementById(s.el);
+  el.style.transform = "translateY(0px)";
+
   if (s.count <= VISIBLE) return;
 
   s.idx = 0;
+
   s.timer = setInterval(() => {
     const maxStart = s.count - VISIBLE;
+
     if (s.idx < maxStart) {
       s.idx++;
-      document.getElementById(s.el).style.transform = `translateY(${-s.idx * ROW_H}px)`;
+      el.style.transform = `translateY(${-s.idx * ROW_H}px)`;
     } else {
-      clearInterval(s.timer);
+      // pause, then snap to top and restart
+      stopScroll(cls);
       setTimeout(() => {
-        const el = document.getElementById(s.el);
         el.style.transition = "none";
         el.style.transform = "translateY(0px)";
         s.idx = 0;
+
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             el.style.transition = "transform 600ms ease";
@@ -258,24 +283,38 @@ function startScroll(cls) {
 
 async function render(cls) {
   const s = state[cls];
+  const container = document.getElementById(s.el);
+  const updatedEl = document.getElementById(s.upd);
+
   try {
     const res = await fetch(`${BASE}/?class=${cls}`, { cache: "no-store" });
+    if (!res.ok) throw new Error("Fetch failed");
+
     const data = await res.json();
     const list = data.standings || [];
 
     if (!list.length) {
-      document.getElementById(s.el).innerHTML = '<div class="error">No data</div>';
+      container.innerHTML = '<div class="error">No data</div>';
+      updatedEl.textContent = "";
+      stopScroll(cls);
+      s.count = 0;
       return;
     }
 
-    document.getElementById(s.el).innerHTML = buildRows(list);
-    document.getElementById(s.upd).textContent =
-      `Updated: ${new Date(data.updatedAt).toLocaleString()}`;
+    // Ensure points-leader order + sequential ranks (in case upstream changes)
+    list.sort((a, b) => (b.points - a.points) || String(a.name).localeCompare(String(b.name)));
+    list.forEach((r, i) => r.rank = i + 1);
+
+    container.innerHTML = buildRows(list);
+    updatedEl.textContent = `Updated: ${new Date(data.updatedAt).toLocaleString()}`;
 
     s.count = list.length;
     startScroll(cls);
-  } catch {
-    document.getElementById(s.el).innerHTML = '<div class="error">Load error</div>';
+  } catch (e) {
+    container.innerHTML = '<div class="error">Load error</div>';
+    updatedEl.textContent = "";
+    stopScroll(cls);
+    s.count = 0;
   }
 }
 
